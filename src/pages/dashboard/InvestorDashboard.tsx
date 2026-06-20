@@ -1,15 +1,22 @@
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
-import { Users, PieChart, Filter, Search, PlusCircle } from 'lucide-react';
+import { Users, Calendar, PieChart, Filter, Search, PlusCircle } from 'lucide-react';
 import { Button } from '../../components/ui/Button';
 import { Card, CardBody, CardHeader } from '../../components/ui/Card';
 import { Input } from '../../components/ui/Input';
 import { Badge } from '../../components/ui/Badge';
 import { EntrepreneurCard } from '../../components/entrepreneur/EntrepreneurCard';
 import { useAuth } from '../../context/AuthContext';
-import { Entrepreneur } from '../../types';
-import { entrepreneurs } from '../../data/users';
+import { entrepreneurs, findUserById } from '../../data/users';
 import { getRequestsFromInvestor } from '../../data/collaborationRequests';
+import { getConfirmedMeetingsForUser } from '../../data/meetings';
+
+const formatMeetingTime = (value: string): string => {
+  return new Intl.DateTimeFormat('en', {
+    dateStyle: 'medium',
+    timeStyle: 'short'
+  }).format(new Date(value));
+};
 
 export const InvestorDashboard: React.FC = () => {
   const { user } = useAuth();
@@ -21,6 +28,7 @@ export const InvestorDashboard: React.FC = () => {
   // Get collaboration requests sent by this investor
   const sentRequests = getRequestsFromInvestor(user.id);
   const requestedEntrepreneurIds = sentRequests.map(req => req.entrepreneurId);
+  const confirmedMeetings = getConfirmedMeetingsForUser(user.id);
   
   // Filter entrepreneurs based on search and industry filters
   const filteredEntrepreneurs = entrepreneurs.filter(entrepreneur => {
@@ -101,7 +109,7 @@ export const InvestorDashboard: React.FC = () => {
       </div>
       
       {/* Stats summary */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4">
         <Card className="bg-primary-50 border border-primary-100">
           <CardBody>
             <div className="flex items-center">
@@ -145,7 +153,52 @@ export const InvestorDashboard: React.FC = () => {
             </div>
           </CardBody>
         </Card>
+
+        <Card className="bg-success-50 border border-success-100">
+          <CardBody>
+            <div className="flex items-center">
+              <div className="p-3 bg-success-50 rounded-full mr-4">
+                <Calendar size={20} className="text-success-700" />
+              </div>
+              <div>
+                <p className="text-sm font-medium text-success-700">Upcoming Meetings</p>
+                <h3 className="text-xl font-semibold text-success-900">{confirmedMeetings.length}</h3>
+              </div>
+            </div>
+          </CardBody>
+        </Card>
       </div>
+
+      <Card>
+        <CardHeader className="flex justify-between items-center">
+          <h2 className="text-lg font-medium text-gray-900">Upcoming Meetings</h2>
+          <Link to="/calendar" className="text-sm font-medium text-primary-600 hover:text-primary-500">
+            Calendar
+          </Link>
+        </CardHeader>
+
+        <CardBody>
+          {confirmedMeetings.length > 0 ? (
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              {confirmedMeetings.slice(0, 3).map(meeting => {
+                const otherUserId = meeting.requesterId === user.id ? meeting.receiverId : meeting.requesterId;
+                const otherUser = findUserById(otherUserId);
+
+                return (
+                  <div key={meeting.id} className="rounded-md border border-gray-200 p-3">
+                    <p className="text-sm font-medium text-gray-900">
+                      {otherUser?.name || 'Meeting participant'}
+                    </p>
+                    <p className="mt-1 text-xs text-gray-500">{formatMeetingTime(meeting.start)}</p>
+                  </div>
+                );
+              })}
+            </div>
+          ) : (
+            <p className="text-sm text-gray-600">No confirmed meetings yet.</p>
+          )}
+        </CardBody>
+      </Card>
       
       {/* Entrepreneurs grid */}
       <div>

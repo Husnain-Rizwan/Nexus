@@ -9,7 +9,15 @@ import { InvestorCard } from '../../components/investor/InvestorCard';
 import { useAuth } from '../../context/AuthContext';
 import { CollaborationRequest } from '../../types';
 import { getRequestsForEntrepreneur } from '../../data/collaborationRequests';
-import { investors } from '../../data/users';
+import { findUserById, investors } from '../../data/users';
+import { getConfirmedMeetingsForUser } from '../../data/meetings';
+
+const formatMeetingTime = (value: string): string => {
+  return new Intl.DateTimeFormat('en', {
+    dateStyle: 'medium',
+    timeStyle: 'short'
+  }).format(new Date(value));
+};
 
 export const EntrepreneurDashboard: React.FC = () => {
   const { user } = useAuth();
@@ -35,6 +43,7 @@ export const EntrepreneurDashboard: React.FC = () => {
   if (!user) return null;
   
   const pendingRequests = collaborationRequests.filter(req => req.status === 'pending');
+  const confirmedMeetings = getConfirmedMeetingsForUser(user.id);
   
   return (
     <div className="space-y-6 animate-fade-in">
@@ -93,7 +102,7 @@ export const EntrepreneurDashboard: React.FC = () => {
               </div>
               <div>
                 <p className="text-sm font-medium text-accent-700">Upcoming Meetings</p>
-                <h3 className="text-xl font-semibold text-accent-900">2</h3>
+                <h3 className="text-xl font-semibold text-accent-900">{confirmedMeetings.length}</h3>
               </div>
             </div>
           </CardBody>
@@ -149,6 +158,37 @@ export const EntrepreneurDashboard: React.FC = () => {
         
         {/* Recommended investors */}
         <div className="space-y-4">
+          <Card>
+            <CardHeader className="flex justify-between items-center">
+              <h2 className="text-lg font-medium text-gray-900">Upcoming Meetings</h2>
+              <Link to="/calendar" className="text-sm font-medium text-primary-600 hover:text-primary-500">
+                Calendar
+              </Link>
+            </CardHeader>
+
+            <CardBody>
+              {confirmedMeetings.length > 0 ? (
+                <div className="space-y-3">
+                  {confirmedMeetings.slice(0, 3).map(meeting => {
+                    const otherUserId = meeting.requesterId === user.id ? meeting.receiverId : meeting.requesterId;
+                    const otherUser = findUserById(otherUserId);
+
+                    return (
+                      <div key={meeting.id} className="rounded-md border border-gray-200 p-3">
+                        <p className="text-sm font-medium text-gray-900">
+                          {otherUser?.name || 'Meeting participant'}
+                        </p>
+                        <p className="mt-1 text-xs text-gray-500">{formatMeetingTime(meeting.start)}</p>
+                      </div>
+                    );
+                  })}
+                </div>
+              ) : (
+                <p className="text-sm text-gray-600">No confirmed meetings yet.</p>
+              )}
+            </CardBody>
+          </Card>
+
           <Card>
             <CardHeader className="flex justify-between items-center">
               <h2 className="text-lg font-medium text-gray-900">Recommended Investors</h2>

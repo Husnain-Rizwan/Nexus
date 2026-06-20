@@ -26,6 +26,7 @@ import { DocumentsPage } from './pages/documents/DocumentsPage';
 import { SettingsPage } from './pages/settings/SettingsPage';
 import { HelpPage } from './pages/help/HelpPage';
 import { DealsPage } from './pages/deals/DealsPage';
+import { CalendarPage } from './pages/calendar/CalendarPage';
 
 // Chat Pages
 import { ChatPage } from './pages/chat/ChatPage';
@@ -70,6 +71,10 @@ function App() {
           
           <Route path="/documents" element={<DashboardLayout />}>
             <Route index element={<DocumentsPage />} />
+          </Route>
+
+          <Route path="/calendar" element={<DashboardLayout />}>
+            <Route index element={<CalendarPage />} />
           </Route>
           
           <Route path="/settings" element={<DashboardLayout />}>
